@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业级 AI Agent 管控平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #050c18;
+  --bg-panel: #0a1628;
+  --bg-card: #0d1e35;
+  --bg-hover: #122540;
+  --border: rgba(0,180,255,0.15);
+  --border-bright: rgba(0,180,255,0.4);
+  --accent: #00b4ff;
+  --accent-dim: rgba(0,180,255,0.12);
+  --accent2: #00ffc8;
+  --accent3: #ff6b35;
+  --accent4: #a259ff;
+  --text-primary: #e8f4ff;
+  --text-secondary: #7a9bb5;
+  --text-dim: #3d5870;
+  --success: #00e5a0;
+  --warning: #ffb800;
+  --danger: #ff4757;
+  --grid-line: rgba(0,180,255,0.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Noto Sans SC',sans-serif;overflow:hidden;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px;}
+
+/* Layout */
+.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;height:100vh;}
+
+/* Top Bar */
+.topbar{grid-column:1/-1;background:var(--bg-panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;position:relative;z-index:100;}
+.topbar-logo{display:flex;align-items:center;gap:10px;min-width:200px;}
+.logo-icon{width:32px;height:32px;position:relative;}
+.logo-icon svg{width:100%;height:100%;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.topbar-title{font-size:13px;color:var(--text-secondary);border-left:1px solid var(--border);padding-left:16px;flex:1;}
+.topbar-status{display:flex;align-items:center;gap:20px;margin-left:auto;}
+.status-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2s infinite;}
+.status-dot.warn{background:var(--warning);box-shadow:0 0 8px var(--warning);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.topbar-user{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .2s;}
+.topbar-user:hover{border-color:var(--accent);background:var(--accent-dim);}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent4));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.topbar-actions{display:flex;gap:8px;}
+.icon-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:4px;background:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:16px;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.notif-badge{position:relative;}
+.notif-badge::after{content:'3';position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--danger);font-size:9px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani';font-weight:700;}
+
+/* Sidebar */
+.sidebar{background:var(--bg-panel);border-right:1px solid var(--border);padding:12px 0;display:flex;flex-direction:column;overflow-y:auto;}
+.nav-section{padding:0 12px;margin-bottom:4px;}
+.nav-label{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;padding:8px 8px 4px;font-family:'Rajdhani';}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:4px;cursor:pointer;color:var(--text-secondary);font-size:13px;transition:all .2s;position:relative;border:1px solid transparent;margin-bottom:2px;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border);}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:var(--border-bright);}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--accent);border-radius:0 2px 2px 0;box-shadow:0 0 8px var(--accent);}
+.nav-icon{width:16px;text-align:center;font-size:14px;}
+.nav-badge{margin-left:auto;background:var(--accent);color:var(--bg-deep);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'Rajdhani';}
+.nav-badge.red{background:var(--danger);}
+.nav-divider{height:1px;background:var(--border);margin:8px 12px;}
+.sidebar-bottom{margin-top:auto;padding:12px;}
+.env-toggle{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:10px;font-size:11px;}
+.env-toggle-label{color:var(--text-dim);margin-bottom:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-family:'Rajdhani';}
+.env-tabs{display:flex;gap:4px;}
+.env-tab{flex:1;padding:4px;border:1px solid var(--border);border-radius:3px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-secondary);transition:all .2s;}
+.env-tab.active{background:var(--accent);color:var(--bg-deep);border-color:var(--accent);font-weight:700;}
+
+/* Main Content */
+.main{overflow-y:auto;background:var(--bg-deep);position:relative;}
+.main-bg{position:absolute;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.main-content{position:relative;z-index:1;padding:20px;}
+
+/* Page Header */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--text-primary);letter-spacing:1px;}
+.page-subtitle{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+.page-actions{display:flex;gap:8px;}
+.btn{padding:8px 16px;border-radius:4px;font-size:12px;cursor:pointer;transition:all .2s;font-family:'Noto Sans SC';display:flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--accent);color:var(--bg-deep);border:none;font-weight:700;}
+.btn-primary:hover{background:#33c5ff;box-shadow:0 0 20px rgba(0,180,255,0.4);}
+.btn-ghost{background:none;color:var(--text-secondary);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.btn-success{background:var(--success);color:var(--bg-deep);border:none;font-weight:700;}
+
+/* Metric Cards */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.metric-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .25s;}
+.metric-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(0,180,255,0.03));pointer-events:none;}
+.metric-card:hover{border-color:var(--border-bright);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,180,255,0.1);}
+.metric-label{font-size:11px;color:var(--text-secondary);letter-spacing:1px;text-transform:uppercase;font-family:'Rajdhani';margin-bottom:8px;}
+.metric-value{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;line-height:1;margin-bottom:6px;}
+.metric-value.blue{color:var(--accent);}
+.metric-value.green{color:var(--success);}
+.metric-value.orange{color:var(--accent3);}
+.metric-value.purple{color:var(--accent4);}
+.metric-change{font-size:11px;display:flex;align-items:center;gap:4px;}
+.metric-change.up{color:var(--success);}
+.metric-change.down{color:var(--danger);}
+.metric-icon{position:absolute;top:14px;right:14px;font-size:20px;opacity:.3;}
+.metric-sparkline{height:30px;margin-top:8px;}
+
+/* Content Grid */
+.content-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;}
+.content-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+
+/* Panel */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;color:var(--text-primary);display:flex;align-items:center;gap:8px;}
+.panel-title-dot{width:8px;height:8px;border-radius:50%;}
+.panel-title-dot.blue{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.panel-title-dot.green{background:var(--success);box-shadow:0 0 8px var(--success);}
+.panel-title-dot.orange{background:var(--accent3);box-shadow:0 0 8px var(--accent3);}
+.panel-title-dot.purple{background:var(--accent4);box-shadow:0 0 8px var(--accent4);}
+.panel-actions{display:flex;gap:6px;}
+.panel-body{padding:16px;}
+
+/* Agent List */
+.agent-list{display:flex;flex-direction:column;gap:8px;}
+.agent-row{display:grid;grid-template-columns:36px 1fr 90px 80px 90px 80px;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .2s;background:var(--bg-panel);}
+.agent-row:hover{border-color:var(--border-bright);background:var(--bg-hover);}
+.agent-avatar{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--accent-dim);border:1px solid var(--border);}
+.agent-info{min-width:0;}
+.agent-name{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.agent-type{font-size:11px;color:var(--text-secondary);}
+.agent-mode{display:flex;align-items:center;gap:4px;font-size:11px;}
+.mode-tag{padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;font-family:'Rajdhani';letter-spacing:.5px;}
+.mode-server{background:rgba(0,180,255,0.15);color:var(--accent);border:1px solid rgba(0,180,255,0.3);}
+.mode-client{background:rgba(0,229,160,0.12);color:var(--success);border:1px solid rgba(0,229,160,0.25);}
+.mode-hybrid{background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25);}
+.agent-status{display:flex;align-items:center;gap:5px;font-size:11px;}
+.agent-status .dot{width:6px;height:6px;border-radius:50%;}
+.dot-green{background:var(--success);}
+.dot-yellow{background:var(--warning);}
+.dot-red{background:var(--danger);}
+.agent-qps{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);}
+.agent-success{font-family:'JetBrains Mono',monospace;font-size:12px;}
+
+/* Skill Registry */
+.skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.skill-card{border:1px solid var(--border);border-radius:4px;padding:10px 12px;cursor:pointer;transition:all .2s;background:var(--bg-panel);}
+.skill-card:hover{border-color:var(--border-bright);background:var(--bg-hover);}
+.skill-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.skill-icon{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.skill-card-name{font-size:12px;font-weight:500;color:var(--text-primary);}
+.skill-card-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.tag{font-size:10px;padding:1px 6px;border-radius:2px;font-family:'Rajdhani';font-weight:600;letter-spacing:.5px;}
+.tag-server{background:rgba(0,180,255,0.1);color:var(--accent);}
+.tag-client{background:rgba(0,229,160,0.1);color:var(--success);}
+.tag-hybrid{background:rgba(162,89,255,0.1);color:var(--accent4);}
+.tag-calls{background:rgba(255,107,53,0.1);color:var(--accent3);}
+
+/* Route Rules */
+.route-list{display:flex;flex-direction:column;gap:6px;}
+.route-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--bg-panel);}
+.route-arrow{color:var(--text-dim);font-size:16px;}
+.route-condition{flex:1;color:var(--text-secondary);}
+.route-condition code{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px;background:var(--accent-dim);padding:1px 5px;border-radius:2px;}
+.route-target{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;letter-spacing:.5px;}
+.route-target.server{color:var(--accent);}
+.route-target.client{color:var(--success);}
+.route-target.offline{color:var(--warning);}
+
+/* Chart area */
+.chart-container{height:180px;position:relative;}
+.chart-placeholder{width:100%;height:100%;position:relative;}
+canvas{display:block;}
+
+/* Log stream */
+.log-stream{background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:12px;height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;}
+.log-line{display:flex;gap:10px;}
+.log-time{color:var(--text-dim);min-width:80px;}
+.log-level{min-width:40px;font-weight:600;}
+.log-level.info{color:var(--accent);}
+.log-level.warn{color:var(--warning);}
+.log-level.error{color:var(--danger);}
+.log-level.ok{color:var(--success);}
+.log-msg{color:var(--text-secondary);}
+.log-msg span{color:var(--text-primary);}
+
+/* Progress bars */
+.progress-list{display:flex;flex-direction:column;gap:12px;}
+.progress-item{display:flex;flex-direction:column;gap:5px;}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);}
+.progress-label span:last-child{color:var(--text-primary);font-family:'Rajdhani';font-weight:600;}
+.progress-track{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.fill-blue{background:linear-gradient(90deg,var(--accent),rgba(0,180,255,.5));}
+.fill-green{background:linear-gradient(90deg,var(--success),rgba(0,229,160,.5));}
+.fill-orange{background:linear-gradient(90deg,var(--accent3),rgba(255,107,53,.5));}
+.fill-purple{background:linear-gradient(90deg,var(--accent4),rgba(162,89,255,.5));}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.tab{padding:10px 16px;font-size:12px;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'Rajdhani';letter-spacing:.5px;font-weight:500;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover{color:var(--text-primary);}
+
+/* Arch diagram */
+.arch-diagram{display:flex;flex-direction:column;gap:8px;padding:4px;}
+.arch-layer{border:1px solid var(--border);border-radius:4px;padding:8px 12px;display:flex;align-items:center;gap:12px;position:relative;}
+.arch-layer-name{font-size:11px;color:var(--text-secondary);min-width:80px;font-family:'Rajdhani';letter-spacing:1px;}
+.arch-nodes{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+.arch-node{padding:4px 10px;border-radius:3px;font-size:11px;font-family:'Rajdhani';font-weight:600;letter-spacing:.5px;}
+.arch-connector{text-align:center;color:var(--text-dim);font-size:16px;line-height:1;}
+
+/* Impl roadmap */
+.roadmap{display:flex;gap:12px;}
+.roadmap-phase{flex:1;border:1px solid var(--border);border-radius:4px;padding:12px;position:relative;}
+.roadmap-phase-num{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;opacity:.2;}
+.roadmap-phase-title{font-size:12px;font-weight:600;margin-bottom:8px;}
+.roadmap-items{display:flex;flex-direction:column;gap:4px;}
+.roadmap-item{font-size:11px;color:var(--text-secondary);display:flex;align-items:flex-start;gap:5px;}
+.roadmap-item::before{content:'›';color:var(--accent);margin-top:-1px;}
+.roadmap-phase.p1{border-color:rgba(0,180,255,0.3);}
+.roadmap-phase.p1 .roadmap-phase-num{color:var(--accent);}
+.roadmap-phase.p2{border-color:rgba(0,229,160,0.3);}
+.roadmap-phase.p2 .roadmap-phase-num{color:var(--success);}
+.roadmap-phase.p3{border-color:rgba(162,89,255,0.3);}
+.roadmap-phase.p3 .roadmap-phase-num{color:var(--accent4);}
+
+/* Alerts */
+.alert-list{display:flex;flex-direction:column;gap:6px;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:4px;font-size:12px;}
+.alert-item.warn{background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);}
+.alert-item.info{background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.2);}
+.alert-item.ok{background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.2);}
+.alert-icon{font-size:14px;margin-top:1px;}
+.alert-content{}
+.alert-title{font-weight:500;color:var(--text-primary);}
+.alert-desc{color:var(--text-secondary);font-size:11px;margin-top:2px;}
+.alert-time{margin-left:auto;font-size:10px;color:var(--text-dim);white-space:nowrap;font-family:'JetBrains Mono';}
+
+/* Tooltip overlay */
+.tooltip{position:fixed;background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:4px;padding:8px 12px;font-size:11px;color:var(--text-primary);pointer-events:none;display:none;z-index:9999;max-width:200px;}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.breadcrumb a{color:var(--text-secondary);text-decoration:none;cursor:pointer;}
+.breadcrumb a:hover{color:var(--accent);}
+.breadcrumb-sep{color:var(--text-dim);}
+.breadcrumb-current{color:var(--text-primary);}
+
+/* Modal backdrop */
+.modal-backdrop{position:fixed;inset:0;background:rgba(5,12,24,0.85);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:8px;width:520px;max-height:80vh;overflow:hidden;animation:slideUp .2s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;}
+.modal-close{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:2px 6px;}
+.modal-close:hover{color:var(--danger);}
+.modal-body{padding:20px;overflow-y:auto;}
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;color:var(--text-secondary);margin-bottom:6px;display:block;font-family:'Rajdhani';letter-spacing:1px;text-transform:uppercase;}
+.form-input{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:'Noto Sans SC';transition:all .2s;outline:none;}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,180,255,0.1);}
+.form-select{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--text-primary);font-size:13px;outline:none;cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* Loading shimmer */
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+
+/* Active page sections */
+.page-section{display:none;}
+.page-section.active{display:block;}
+
+/* Glow effects */
+.glow-blue{text-shadow:0 0 20px rgba(0,180,255,0.5);}
+
+/* Topology */
+.topo{display:flex;flex-direction:column;align-items:center;gap:0;padding:8px 0;}
+.topo-row{display:flex;justify-content:center;gap:20px;position:relative;}
+.topo-node{background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:8px 14px;text-align:center;min-width:90px;cursor:pointer;transition:all .2s;}
+.topo-node:hover{border-color:var(--border-bright);transform:scale(1.02);}
+.topo-node.center{border-color:var(--accent);background:var(--accent-dim);}
+.topo-node-icon{font-size:18px;margin-bottom:3px;}
+.topo-node-name{font-size:10px;color:var(--text-secondary);font-family:'Rajdhani';letter-spacing:.5px;}
+.topo-connector{text-align:center;height:20px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);}
+
+/* Responsive tweaks */
+@media(max-width:1400px){
+  .metrics-row{grid-template-columns:repeat(2,1fr);}
+  .content-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- APP SHELL -->
+<div class="app">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" fill="none" stroke="#00b4ff" stroke-width="1.5" opacity=".4"/>
+          <polygon points="16,6 26,12 26,20 16,26 6,20 6,12" fill="none" stroke="#00b4ff" stroke-width="1" opacity=".7"/>
+          <circle cx="16" cy="16" r="5" fill="#00b4ff" opacity=".9"/>
+          <circle cx="16" cy="16" r="2.5" fill="#050c18"/>
+          <line x1="16" y1="6" x2="16" y2="11" stroke="#00b4ff" stroke-width="1"/>
+          <line x1="16" y1="21" x2="16" y2="26" stroke="#00b4ff" stroke-width="1"/>
+          <line x1="6" y1="12" x2="11" y2="14.5" stroke="#00b4ff" stroke-width="1"/>
+          <line x1="21" y1="17.5" x2="26" y2="20" stroke="#00b4ff" stroke-width="1"/>
+          <line x1="6" y1="20" x2="11" y2="17.5" stroke="#00b4ff" stroke-width="1"/>
+          <line x1="21" y1="14.5" x2="26" y2="12" stroke="#00b4ff" stroke-width="1"/>
+        </svg>
+      </div>
+      <span class="logo-text">AgentOS</span>
+    </div>
+    <span class="topbar-title">企业级 AI Agent 管控平台 &nbsp;·&nbsp; 生产环境</span>
+    <div class="topbar-status">
+      <span class="status-badge"><span class="status-dot"></span>系统运行正常</span>
+      <span class="status-badge"><span class="status-dot warn"></span>2 告警待处理</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn notif-badge" title="通知">🔔</button>
+      <button class="icon-btn" title="设置">⚙️</button>
+    </div>
+    <div class="topbar-user">
+      <div class="avatar">A</div>
+      <span style="font-size:12px;color:var(--text-secondary)">Admin</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">总览</div>
+      <div class="nav-item active" onclick="navigate('overview',this)">
+        <span class="nav-icon">📊</span>平台总览
+      </div>
+      <div class="nav-item" onclick="navigate('arch',this)">
+        <span class="nav-icon">🏗️</span>架构拓扑
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Agent 管理</div>
+      <div class="nav-item" onclick="navigate('agents',this)">
+        <span class="nav-icon">🤖</span>Agent 列表
+        <span class="nav-badge">12</span>
+      </div>
+      <div class="nav-item" onclick="navigate('orchestration',this)">
+        <span class="nav-icon">🔀</span>编排流水线
+      </div>
+      <div class="nav-item" onclick="navigate('routing',this)">
+        <span class="nav-icon">🛣️</span>智能路由
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Skill 能力</div>
+      <div class="nav-item" onclick="navigate('skills',this)">
+        <span class="nav-icon">⚡</span>技能市场
+        <span class="nav-badge">38</span>
+      </div>
+      <div class="nav-item" onclick="navigate('skills',this)">
+        <span class="nav-icon">🧩</span>技能注册中心
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">运维监控</div>
+      <div class="nav-item" onclick="navigate('monitor',this)">
+        <span class="nav-icon">📈</span>实时监控
+        <span class="nav-badge red">2</span>
+      </div>
+      <div class="nav-item" onclick="navigate('monitor',this)">
+        <span class="nav-icon">📋</span>操作审计
+      </div>
+      <div class="nav-item" onclick="navigate('monitor',this)">
+        <span class="nav-icon">🛡️</span>安全合规
+      </div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">部署</div>
+      <div class="nav-item" onclick="navigate('deploy',this)">
+        <span class="nav-icon">🚀</span>发布管理
+      </div>
+      <div class="nav-item" onclick="navigate('deploy',this)">
+        <span class="nav-icon">🗓️</span>实施路线图
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="env-toggle">
+        <div class="env-toggle-label">当前环境</div>
+        <div class="env-tabs">
+          <div class="env-tab active">生产</div>
+          <div class="env-tab" onclick="this.parentNode.querySelectorAll('.env-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">预发</div>
+          <div class="env-tab" onclick="this.parentNode.querySelectorAll('.env-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">开发</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="main-bg"></div>
+    <div class="main-content">
+
+      <!-- OVERVIEW PAGE -->
+      <div id="page-overview" class="page-section active">
+        <div class="breadcrumb">
+          <a>AgentOS</a><span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">平台总览</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title glow-blue">平台总览 <span style="font-size:14px;color:var(--text-dim);font-weight:400">DASHBOARD</span></div>
+            <div class="page-subtitle">实时掌握全平台 Agent 运行状态、调用链路与资源消耗</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-ghost" onclick="openModal()">＋ 新建 Agent</button>
+            <button class="btn btn-primary">⬇ 导出报告</button>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-label">在线 Agent 数</div>
+            <div class="metric-value blue">12</div>
+            <div class="metric-change up">↑ 2 较昨日新增</div>
+            <div class="metric-icon">🤖</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">今日调用总量</div>
+            <div class="metric-value green">84,293</div>
+            <div class="metric-change up">↑ 12.4%</div>
+            <div class="metric-icon">⚡</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">平均响应延迟</div>
+            <div class="metric-value orange">238<span style="font-size:14px">ms</span></div>
+            <div class="metric-change down">↑ 18ms 较昨日</div>
+            <div class="metric-icon">⏱️</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">整体成功率</div>
+            <div class="metric-value" style="color:var(--success)">99.2<span style="font-size:14px">%</span></div>
+            <div class="metric-change up">↑ 0.3%</div>
+            <div class="metric-icon">✅</div>
+          </div>
+        </div>
+
+        <!-- Chart + Alerts -->
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot blue"></span>调用量趋势（近24小时）</div>
+              <div class="panel-actions">
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">服务端</button>
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">终端</button>
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">全部 ▾</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-container">
+                <canvas id="callChart" width="640" height="160"></canvas>
+              </div>
+              <div style="display:flex;gap:20px;margin-top:12px;">
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)">
+                  <span style="width:12px;height:3px;background:var(--accent);border-radius:2px;display:inline-block"></span>服务端调用
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)">
+                  <span style="width:12px;height:3px;background:var(--success);border-radius:2px;display:inline-block"></span>终端调用
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary)">
+                  <span style="width:12px;height:3px;background:var(--danger);border-radius:2px;display:inline-block;border-top:1px dashed"></span>异常
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot" style="background:var(--warning);box-shadow:0 0 8px var(--warning)"></span>告警中心</div>
+                <span style="font-size:11px;color:var(--text-secondary);cursor:pointer">全部 →</span>
+              </div>
+              <div class="panel-body" style="padding:10px 14px;">
+                <div class="alert-list">
+                  <div class="alert-item warn">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-content">
+                      <div class="alert-title">技能调用超时告警</div>
+                      <div class="alert-desc">ERP查询Skill P99延迟超阈值 (1200ms)</div>
+                    </div>
+                    <span class="alert-time">03:41</span>
+                  </div>
+                  <div class="alert-item warn">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-content">
+                      <div class="alert-title">终端 Agent 离线</div>
+                      <div class="alert-desc">设备 DEV-0812 心跳超时 >5min</div>
+                    </div>
+                    <span class="alert-time">02:18</span>
+                  </div>
+                  <div class="alert-item info">
+                    <span class="alert-icon">ℹ️</span>
+                    <div class="alert-content">
+                      <div class="alert-title">灰度发布完成</div>
+                      <div class="alert-desc">投研 Agent v2.3.1 已全量发布</div>
+                    </div>
+                    <span class="alert-time">01:05</span>
+                  </div>
+                  <div class="alert-item ok">
+                    <span class="alert-icon">✅</span>
+                    <div class="alert-content">
+                      <div class="alert-title">自愈触发成功</div>
+                      <div class="alert-desc">Skill Pod 自动重启恢复正常</div>
+                    </div>
+                    <span class="alert-time">00:33</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot purple"></span>资源消耗</div>
+              </div>
+              <div class="panel-body">
+                <div class="progress-list">
+                  <div class="progress-item">
+                    <div class="progress-label"><span>Agent 引擎 CPU</span><span>72%</span></div>
+                    <div class="progress-track"><div class="progress-fill fill-blue" style="width:72%"></div></div>
+                  </div>
+                  <div class="progress-item">
+                    <div class="progress-label"><span>Skill 集群内存</span><span>58%</span></div>
+                    <div class="progress-track"><div class="progress-fill fill-green" style="width:58%"></div></div>
+                  </div>
+                  <div class="progress-item">
+                    <div class="progress-label"><span>模型推理 GPU</span><span>89%</span></div>
+                    <div class="progress-track"><div class="progress-fill fill-orange" style="width:89%"></div></div>
+                  </div>
+                  <div class="progress-item">
+                    <div class="progress-label"><span>向量库存储</span><span>43%</span></div>
+                    <div class="progress-track"><div class="progress-fill fill-purple" style="width:43%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent + Skills row -->
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot blue"></span>Agent 实时状态</div>
+              <div class="panel-actions">
+                <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px">筛选 ▾</button>
+                <button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="navigate('agents',document.querySelector('[onclick*=agents]'))">全部 →</button>
+              </div>
+            </div>
+            <div class="panel-body" style="padding:10px 14px;">
+              <div style="display:grid;grid-template-columns:36px 1fr 90px 80px 90px 80px;gap:12px;padding:4px 14px;margin-bottom:4px;">
+                <div></div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">AGENT</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">模式</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">状态</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">QPS</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">成功率</div>
+              </div>
+              <div class="agent-list" id="agentListOverview"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot orange"></span>热门技能 Top 6</div>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="navigate('skills',document.querySelector('[onclick*=skills]'))">技能市场 →</button>
+            </div>
+            <div class="panel-body" style="padding:10px 14px;">
+              <div class="skill-grid" id="skillGridOverview"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Log stream -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-dot green"></span>实时操作日志</div>
+            <div class="panel-actions">
+              <span style="font-size:11px;color:var(--success)">● 直播中</span>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;margin-left:8px">暂停</button>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:10px 14px;">
+            <div class="log-stream" id="logStream"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARCHITECTURE PAGE -->
+      <div id="page-arch" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item.active'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">架构拓扑</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">架构拓扑 <span style="font-size:14px;color:var(--text-dim);font-weight:400">ARCHITECTURE</span></div>
+            <div class="page-subtitle">双模式融合架构 — 服务端集中调度 + 终端边缘执行</div>
+          </div>
+        </div>
+
+        <div class="content-grid-3">
+          <!-- Arch Layers -->
+          <div class="panel" style="grid-column:1/3;">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot blue"></span>分层架构图</div>
+              <div class="tabs" style="border:none;gap:4px;">
+                <div class="tab active" onclick="switchTab(this,'arch-overview')">融合架构</div>
+                <div class="tab" onclick="switchTab(this,'arch-server')">服务端模式</div>
+                <div class="tab" onclick="switchTab(this,'arch-client')">终端模式</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="arch-diagram">
+                <div class="arch-layer" style="border-color:rgba(0,180,255,0.25);background:rgba(0,180,255,0.04);">
+                  <div class="arch-layer-name">接入层</div>
+                  <div class="arch-nodes">
+                    <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">PC 端</div>
+                    <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">移动端</div>
+                    <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">办公助手</div>
+                    <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">OpenAPI</div>
+                    <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">智能机器人</div>
+                  </div>
+                </div>
+                <div class="arch-connector">↕</div>
+                <div class="arch-layer" style="border-color:rgba(162,89,255,0.25);background:rgba(162,89,255,0.04);">
+                  <div class="arch-layer-name">智能路由</div>
+                  <div class="arch-nodes">
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">🛡️ 敏感数据 → 服务端</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">📁 本地文件 → 终端</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">🤖 复杂任务 → 云端</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">📡 弱网 → 离线降级</div>
+                  </div>
+                </div>
+                <div class="arch-connector">↕</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div class="arch-layer" style="border-color:rgba(0,180,255,0.3);background:rgba(0,180,255,0.05);">
+                    <div style="width:100%">
+                      <div style="font-size:11px;color:var(--accent);font-family:'Rajdhani';font-weight:700;letter-spacing:1px;margin-bottom:8px">☁️ 服务端 Agent 集群</div>
+                      <div class="arch-nodes">
+                        <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2);font-size:10px">Agent 引擎</div>
+                        <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2);font-size:10px">Skill 集群</div>
+                        <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2);font-size:10px">K8s 弹性扩缩</div>
+                        <div class="arch-node" style="background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2);font-size:10px">RBAC权限</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="arch-layer" style="border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.04);">
+                    <div style="width:100%">
+                      <div style="font-size:11px;color:var(--success);font-family:'Rajdhani';font-weight:700;letter-spacing:1px;margin-bottom:8px">💻 终端 Agent Runtime</div>
+                      <div class="arch-nodes">
+                        <div class="arch-node" style="background:rgba(0,229,160,0.1);color:var(--success);border:1px solid rgba(0,229,160,0.2);font-size:10px">轻量规划器</div>
+                        <div class="arch-node" style="background:rgba(0,229,160,0.1);color:var(--success);border:1px solid rgba(0,229,160,0.2);font-size:10px">本地记忆</div>
+                        <div class="arch-node" style="background:rgba(0,229,160,0.1);color:var(--success);border:1px solid rgba(0,229,160,0.2);font-size:10px">本地 Skill沙箱</div>
+                        <div class="arch-node" style="background:rgba(0,229,160,0.1);color:var(--success);border:1px solid rgba(0,229,160,0.2);font-size:10px">热更新</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="arch-connector">↕</div>
+                <div class="arch-layer" style="border-color:rgba(255,107,53,0.25);background:rgba(255,107,53,0.04);">
+                  <div class="arch-layer-name">模型服务</div>
+                  <div class="arch-nodes">
+                    <div class="arch-node" style="background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.2)">私有化大模型</div>
+                    <div class="arch-node" style="background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.2)">云端 SaaS 模型</div>
+                    <div class="arch-node" style="background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.2)">向量知识库</div>
+                    <div class="arch-node" style="background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.2)">第三方工具链</div>
+                  </div>
+                </div>
+                <div class="arch-connector">↕</div>
+                <div class="arch-layer" style="border-color:rgba(162,89,255,0.3);background:rgba(162,89,255,0.05);">
+                  <div class="arch-layer-name">数据安全</div>
+                  <div class="arch-nodes">
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">细粒度权限控制</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">操作行为审计</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">敏感数据脱敏</div>
+                    <div class="arch-node" style="background:rgba(162,89,255,0.12);color:var(--accent4);border:1px solid rgba(162,89,255,0.25)">数据隔离</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode compare -->
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot blue"></span>模式对比</div>
+              </div>
+              <div class="panel-body" style="padding:10px 14px;">
+                <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                  <thead>
+                    <tr>
+                      <th style="color:var(--text-dim);font-weight:400;text-align:left;padding:4px 8px;font-family:'Rajdhani';letter-spacing:1px">维度</th>
+                      <th style="color:var(--accent);font-weight:600;text-align:center;padding:4px 8px;font-family:'Rajdhani'">服务端</th>
+                      <th style="color:var(--success);font-weight:600;text-align:center;padding:4px 8px;font-family:'Rajdhani'">终端</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-top:1px solid var(--border)">
+                      <td style="padding:6px 8px;color:var(--text-secondary)">数据安全</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">⭐⭐⭐⭐⭐</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-top:1px solid var(--border)">
+                      <td style="padding:6px 8px;color:var(--text-secondary)">响应延迟</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--warning)">⭐⭐⭐</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">⭐⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr style="border-top:1px solid var(--border)">
+                      <td style="padding:6px 8px;color:var(--text-secondary)">离线可用</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--danger)">✗</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">✓</td>
+                    </tr>
+                    <tr style="border-top:1px solid var(--border)">
+                      <td style="padding:6px 8px;color:var(--text-secondary)">复杂编排</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">✓</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--danger)">有限</td>
+                    </tr>
+                    <tr style="border-top:1px solid var(--border)">
+                      <td style="padding:6px 8px;color:var(--text-secondary)">统一管控</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--success)">⭐⭐⭐⭐⭐</td>
+                      <td style="text-align:center;padding:6px 8px;color:var(--warning)">⭐⭐</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot orange"></span>实施路线图</div>
+              </div>
+              <div class="panel-body" style="padding:10px 14px;">
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <div style="border:1px solid rgba(0,180,255,0.3);border-radius:4px;padding:10px;background:rgba(0,180,255,0.04);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                      <span style="font-family:'Rajdhani';font-weight:700;font-size:12px;color:var(--accent)">一期 · 基础构建</span>
+                      <span style="font-size:10px;background:var(--accent);color:var(--bg-deep);padding:1px 7px;border-radius:2px;font-family:'Rajdhani';font-weight:700">进行中</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">服务端 Agent + Skill 平台；核心业务技能上云</div>
+                    <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:8px;overflow:hidden;"><div style="height:100%;width:65%;background:var(--accent);border-radius:2px;"></div></div>
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:3px;text-align:right">65%</div>
+                  </div>
+                  <div style="border:1px solid rgba(0,229,160,0.2);border-radius:4px;padding:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                      <span style="font-family:'Rajdhani';font-weight:700;font-size:12px;color:var(--success)">二期 · 融合扩展</span>
+                      <span style="font-size:10px;border:1px solid var(--border);color:var(--text-secondary);padding:1px 7px;border-radius:2px;font-family:'Rajdhani'">规划中</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">终端 Agent；双模式路由；安全审计平台</div>
+                  </div>
+                  <div style="border:1px solid rgba(162,89,255,0.2);border-radius:4px;padding:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                      <span style="font-family:'Rajdhani';font-weight:700;font-size:12px;color:var(--accent4)">三期 · 深化运营</span>
+                      <span style="font-size:10px;border:1px solid var(--border);color:var(--text-secondary);padding:1px 7px;border-radius:2px;font-family:'Rajdhani'">待规划</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">多 Agent 协同；Skill 市场开放生态</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENTS PAGE -->
+      <div id="page-agents" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">Agent 列表</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Agent 列表</div>
+            <div class="page-subtitle">管理所有运行中的智能体实例，支持服务端/终端双模式</div>
+          </div>
+          <div class="page-actions">
+            <input type="text" class="form-input" style="width:200px;padding:7px 12px" placeholder="🔍 搜索 Agent...">
+            <button class="btn btn-ghost">模式 ▾</button>
+            <button class="btn btn-ghost">状态 ▾</button>
+            <button class="btn btn-primary" onclick="openModal()">＋ 新建 Agent</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-body" style="padding:10px 16px;">
+            <div style="display:grid;grid-template-columns:36px 1fr 90px 80px 90px 80px 100px;gap:12px;padding:6px 14px;margin-bottom:4px;border-bottom:1px solid var(--border);">
+              <div></div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">AGENT 名称 / 类型</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">运行模式</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">状态</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">QPS</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">成功率</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">操作</div>
+            </div>
+            <div id="agentListFull" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SKILLS PAGE -->
+      <div id="page-skills" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">技能市场</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">技能市场</div>
+            <div class="page-subtitle">所有标准化 Skill 的注册、发现与管理中心</div>
+          </div>
+          <div class="page-actions">
+            <input type="text" class="form-input" style="width:200px;padding:7px 12px" placeholder="🔍 搜索技能...">
+            <button class="btn btn-ghost">分类 ▾</button>
+            <button class="btn btn-ghost">环境 ▾</button>
+            <button class="btn btn-primary">＋ 注册技能</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="skillMarket"></div>
+      </div>
+
+      <!-- MONITOR PAGE -->
+      <div id="page-monitor" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">实时监控</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">实时监控 <span style="font-size:12px;color:var(--success);font-family:'Rajdhani'">● LIVE</span></div>
+            <div class="page-subtitle">全栈监控：调用量、成功率、延迟分布、资源消耗</div>
+          </div>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-label">当前 QPS</div>
+            <div class="metric-value blue" id="liveQps">—</div>
+            <div class="metric-change" style="color:var(--text-secondary)">实时更新</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">P99 延迟</div>
+            <div class="metric-value orange" id="liveP99">—</div>
+            <div class="metric-change" style="color:var(--text-secondary)">ms</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">错误率</div>
+            <div class="metric-value" style="color:var(--danger)" id="liveErr">—</div>
+            <div class="metric-change" style="color:var(--text-secondary)">%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">活跃 Pod</div>
+            <div class="metric-value purple">24</div>
+            <div class="metric-change up">弹性扩容中</div>
+          </div>
+        </div>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot blue"></span>调用量 / 错误率（实时）</div>
+            </div>
+            <div class="panel-body">
+              <canvas id="monitorChart" width="600" height="160"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot orange"></span>延迟分位分布</div>
+            </div>
+            <div class="panel-body">
+              <div class="progress-list">
+                <div class="progress-item">
+                  <div class="progress-label"><span>P50</span><span id="p50">128ms</span></div>
+                  <div class="progress-track"><div class="progress-fill fill-green" id="p50bar" style="width:25%"></div></div>
+                </div>
+                <div class="progress-item">
+                  <div class="progress-label"><span>P90</span><span id="p90">298ms</span></div>
+                  <div class="progress-track"><div class="progress-fill fill-blue" id="p90bar" style="width:55%"></div></div>
+                </div>
+                <div class="progress-item">
+                  <div class="progress-label"><span>P99</span><span id="p99bar2">612ms</span></div>
+                  <div class="progress-track"><div class="progress-fill fill-orange" id="p99barfill" style="width:78%"></div></div>
+                </div>
+                <div class="progress-item">
+                  <div class="progress-label"><span>MAX</span><span>1,240ms</span></div>
+                  <div class="progress-track"><div class="progress-fill" style="width:95%;background:linear-gradient(90deg,var(--danger),rgba(255,71,87,.4))"></div></div>
+                </div>
+              </div>
+              <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+                <div style="font-family:'Rajdhani';font-size:11px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px">熔断状态</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div style="padding:4px 12px;border-radius:3px;font-size:11px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:var(--success)">ERP查询 ● 正常</div>
+                  <div style="padding:4px 12px;border-radius:3px;font-size:11px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.25);color:var(--warning)">邮件发送 ⚠ 半开</div>
+                  <div style="padding:4px 12px;border-radius:3px;font-size:11px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:var(--success)">报表生成 ● 正常</div>
+                  <div style="padding:4px 12px;border-radius:3px;font-size:11px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:var(--success)">OA审批 ● 正常</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEPLOY PAGE -->
+      <div id="page-deploy" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">发布管理</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">发布管理</div>
+            <div class="page-subtitle">版本管理、灰度发布、一键回滚 — 全生命周期发布管控</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-ghost">📋 发布记录</button>
+            <button class="btn btn-primary">🚀 新建发布</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="panel-title-dot blue"></span>当前发布任务</div>
+          </div>
+          <div class="panel-body" style="padding:10px 16px;">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 80px 80px;gap:12px;padding:6px 14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">发布名称</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">版本</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">类型</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">灰度进度</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">状态</div>
+                <div style="font-size:10px;color:var(--text-dim);font-family:'Rajdhani';letter-spacing:1px">操作</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 80px 80px;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel)">
+                <div style="font-size:13px;color:var(--text-primary)">投研 Agent 全量发布</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">v2.3.1</div>
+                <div><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-family:'Rajdhani';font-weight:700;background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">全量</span></div>
+                <div><div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden"><div style="height:100%;width:100%;background:var(--success);border-radius:2px;"></div></div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'Rajdhani'">100%</div></div>
+                <div><span style="font-size:11px;color:var(--success)">✓ 完成</span></div>
+                <div><span style="font-size:11px;color:var(--text-dim)">—</span></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 80px 80px;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel)">
+                <div style="font-size:13px;color:var(--text-primary)">ERP查询 Skill 灰度</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">v1.8.0</div>
+                <div><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-family:'Rajdhani';font-weight:700;background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">灰度</span></div>
+                <div><div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden"><div style="height:100%;width:35%;background:var(--accent);border-radius:2px;"></div></div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'Rajdhani'">35%</div></div>
+                <div><span style="font-size:11px;color:var(--accent)">● 进行中</span></div>
+                <div style="display:flex;gap:4px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px">暂停</button><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,71,87,.3)">回滚</button></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 80px 80px;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel)">
+                <div style="font-size:13px;color:var(--text-primary)">终端 Agent 热更新</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">v0.9.5</div>
+                <div><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-family:'Rajdhani';font-weight:700;background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">热更新</span></div>
+                <div><div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden"><div style="height:100%;width:80%;background:var(--accent);border-radius:2px;"></div></div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'Rajdhani'">80%</div></div>
+                <div><span style="font-size:11px;color:var(--accent)">● 进行中</span></div>
+                <div style="display:flex;gap:4px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px">暂停</button><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,71,87,.3)">回滚</button></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 80px 80px;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:4px;background:var(--bg-panel)">
+                <div style="font-size:13px;color:var(--text-primary)">客服 Agent 回滚准备</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">v1.2.3</div>
+                <div><span style="padding:2px 8px;border-radius:3px;font-size:10px;font-family:'Rajdhani';font-weight:700;background:rgba(0,180,255,0.1);color:var(--accent);border:1px solid rgba(0,180,255,0.2)">回滚</span></div>
+                <div><div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden"><div style="height:100%;width:0%;background:var(--text-dim);border-radius:2px;"></div></div><div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'Rajdhani'">0%</div></div>
+                <div><span style="font-size:11px;color:var(--text-secondary)">待执行</span></div>
+                <div style="display:flex;gap:4px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,71,87,.3)">回滚</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROUTING PAGE -->
+      <div id="page-routing" class="page-section">
+        <div class="breadcrumb">
+          <a onclick="navigate('overview',document.querySelector('.nav-item'))">AgentOS</a>
+          <span class="breadcrumb-sep">›</span>
+          <span class="breadcrumb-current">智能路由</span>
+        </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">智能路由配置</div>
+            <div class="page-subtitle">基于场景特征自动路由 — 服务端 / 终端 / 离线降级</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary">＋ 添加规则</button>
+          </div>
+        </div>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><span class="panel-title-dot purple"></span>路由规则列表</div>
+            </div>
+            <div class="panel-body" style="padding:10px 14px;">
+              <div class="route-list">
+                <div class="route-item">
+                  <span style="font-size:18px">🛡️</span>
+                  <span class="route-condition">数据分类 = <code>敏感</code> 或 包含 <code>PII</code></span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target server">☁️ 服务端强制执行</span>
+                  <span style="font-size:10px;color:var(--success);margin-left:auto">启用</span>
+                </div>
+                <div class="route-item">
+                  <span style="font-size:18px">📁</span>
+                  <span class="route-condition">操作类型 = <code>本地文件</code> 或 <code>本地应用</code></span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target client">💻 终端优先执行</span>
+                  <span style="font-size:10px;color:var(--success);margin-left:auto">启用</span>
+                </div>
+                <div class="route-item">
+                  <span style="font-size:18px">🤖</span>
+                  <span class="route-condition">任务步骤数 ≥ <code>5</code> 或 上下文 &gt; <code>8K tokens</code></span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target server">☁️ 云端 Agent 接管</span>
+                  <span style="font-size:10px;color:var(--success);margin-left:auto">启用</span>
+                </div>
+                <div class="route-item">
+                  <span style="font-size:18px">📡</span>
+                  <span class="route-condition">网络质量 &lt; <code>2Mbps</code> 或 RTT &gt; <code>500ms</code></span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target offline">⚡ 终端离线降级</span>
+                  <span style="font-size:10px;color:var(--success);margin-left:auto">启用</span>
+                </div>
+                <div class="route-item">
+                  <span style="font-size:18px">⚖️</span>
+                  <span class="route-condition">服务端负载 &gt; <code>85%</code> 且 可终端执行</span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target client">💻 负载均衡分流</span>
+                  <span style="font-size:10px;color:var(--warning);margin-left:auto">调试中</span>
+                </div>
+                <div class="route-item">
+                  <span style="font-size:18px">🔀</span>
+                  <span class="route-condition">默认规则（兜底）</span>
+                  <span class="route-arrow">→</span>
+                  <span class="route-target server">☁️ 服务端执行</span>
+                  <span style="font-size:10px;color:var(--success);margin-left:auto">启用</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot blue"></span>今日路由分布</div>
+              </div>
+              <div class="panel-body">
+                <canvas id="routeChart" width="300" height="180"></canvas>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title"><span class="panel-title-dot green"></span>Skill 部署标签</div>
+              </div>
+              <div class="panel-body" style="padding:10px 14px;">
+                <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:3px;">
+                    <span style="color:var(--text-secondary)">server-only</span>
+                    <span style="color:var(--accent);font-family:'Rajdhani';font-weight:700">14 个技能</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:3px;">
+                    <span style="color:var(--text-secondary)">client-only</span>
+                    <span style="color:var(--success);font-family:'Rajdhani';font-weight:700">8 个技能</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:3px;">
+                    <span style="color:var(--text-secondary)">hybrid</span>
+                    <span style="color:var(--accent4);font-family:'Rajdhani';font-weight:700">16 个技能</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- New Agent Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">新建 Agent</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Agent 名称</label>
+        <input class="form-input" type="text" placeholder="例如：投研分析 Agent">
+      </div>
+      <div class="form-group">
+        <label class="form-label">业务类型</label>
+        <select class="form-select">
+          <option>投研分析</option>
+          <option>客户服务</option>
+          <option>合规审查</option>
+          <option>风险管控</option>
+          <option>运营报表</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">运行模式</label>
+          <select class="form-select">
+            <option>服务端 (server)</option>
+            <option>终端 (client)</option>
+            <option>混合 (hybrid)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">启动模板</label>
+          <select class="form-select">
+            <option>空白模板</option>
+            <option>客服模板</option>
+            <option>投研模板</option>
+            <option>运维模板</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">绑定技能（多选）</label>
+        <input class="form-input" type="text" placeholder="输入技能名称搜索...">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <span style="padding:3px 10px;border-radius:3px;font-size:11px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--border-bright);cursor:pointer">ERP查询 ✕</span>
+          <span style="padding:3px 10px;border-radius:3px;font-size:11px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--border-bright);cursor:pointer">报表生成 ✕</span>
+          <span style="padding:3px 10px;border-radius:3px;font-size:11px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--border-bright);cursor:pointer">邮件发送 ✕</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">备注说明</label>
+        <textarea class="form-input" rows="3" placeholder="描述该 Agent 的业务用途..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="closeModal()">✓ 创建 Agent</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const AGENTS = [
+  {icon:'🏦',name:'投研分析 Agent',type:'金融研究·服务端',mode:'server',status:'online',qps:'142',succ:'99.8%'},
+  {icon:'👤',name:'客户服务 Agent',type:'客服中台·混合',mode:'hybrid',status:'online',qps:'328',succ:'98.5%'},
+  {icon:'🛡️',name:'合规审查 Agent',type:'风控合规·服务端',mode:'server',status:'online',qps:'56',succ:'100%'},
+  {icon:'📊',name:'报表生成 Agent',type:'数据分析·服务端',mode:'server',status:'online',qps:'89',succ:'99.2%'},
+  {icon:'💼',name:'OA审批 Agent',type:'流程自动化·混合',mode:'hybrid',status:'online',qps:'203',succ:'97.9%'},
+  {icon:'💻',name:'本地文件 Agent',type:'文档处理·终端',mode:'client',status:'online',qps:'41',succ:'99.6%'},
+  {icon:'📱',name:'移动端助手 Agent',type:'移动协作·终端',mode:'client',status:'warn',qps:'17',succ:'95.1%'},
+  {icon:'🔍',name:'知识检索 Agent',type:'RAG检索·服务端',mode:'server',status:'online',qps:'276',succ:'99.4%'},
+];
+const SKILLS = [
+  {icon:'📋',name:'ERP 查询',tags:['server-only','12.3K/日'],color:'blue'},
+  {icon:'📧',name:'邮件发送',tags:['hybrid','8.9K/日'],color:'purple'},
+  {icon:'📊',name:'报表生成',tags:['server-only','6.5K/日'],color:'blue'},
+  {icon:'📝',name:'OA 审批流',tags:['server-only','4.2K/日'],color:'blue'},
+  {icon:'📁',name:'本地文件读写',tags:['client-only','3.8K/日'],color:'green'},
+  {icon:'🔍',name:'向量知识检索',tags:['hybrid','11.2K/日'],color:'purple'},
+  {icon:'💬',name:'会议纪要生成',tags:['client-only','2.1K/日'],color:'green'},
+  {icon:'📈',name:'行情数据查询',tags:['server-only','9.7K/日'],color:'blue'},
+  {icon:'🧮',name:'风险评分计算',tags:['server-only','5.3K/日'],color:'blue'},
+  {icon:'🔔',name:'消息推送',tags:['hybrid','7.8K/日'],color:'purple'},
+  {icon:'🌐',name:'网络爬取',tags:['server-only','1.9K/日'],color:'blue'},
+  {icon:'🔑',name:'SSO 登录集成',tags:['server-only','0.8K/日'],color:'blue'},
+];
+
+function renderModeTag(mode){
+  const map={server:['mode-server','☁️ 服务端'],client:['mode-client','💻 终端'],hybrid:['mode-hybrid','🔀 混合']};
+  const [cls,txt]=map[mode]||['',''];
+  return '<span class="mode-tag '+cls+'">'+txt+'</span>';
+}
+function renderStatusDot(s){
+  const map={online:['dot-green','在线'],warn:['dot-yellow','告警'],offline:['dot-red','离线']};
+  const [cls,txt]=map[s]||['',''];
+  return '<span class="agent-status"><span class="dot '+cls+'"></span>'+txt+'</span>';
+}
+function renderSucc(s){
+  var v=parseFloat(s);
+  var color=v>=99?'var(--success)':v>=97?'var(--warning)':'var(--danger)';
+  return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:'+color+'">'+s+'</span>';
+}
+function buildAgentRow(a,full){
+  var extra=full?'<div style="display:flex;gap:4px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px">详情</button><button class="btn btn-ghost" style="padding:3px 8px;font-size:10px">配置</button></div>':'';
+  var cols=full?'36px 1fr 90px 80px 90px 80px 100px':'36px 1fr 90px 80px 90px 80px';
+  return '<div class="agent-row" style="display:grid;grid-template-columns:'+cols+';gap:12px;">'
+    +'<div class="agent-avatar">'+a.icon+'</div>'
+    +'<div class="agent-info"><div class="agent-name">'+a.name+'</div><div class="agent-type">'+a.type+'</div></div>'
+    +renderModeTag(a.mode)
+    +renderStatusDot(a.status)
+    +'<span class="agent-qps">'+a.qps+'</span>'
+    +renderSucc(a.succ)
+    +extra
+    +'</div>';
+}
+function buildSkillCard(s){
+  var colorMap={blue:'0,180,255',green:'0,229,160',purple:'162,89,255'};
+  var rgb=colorMap[s.color]||'0,180,255';
+  var tagCls=function(t){return t.includes('server')?'tag-server':t.includes('client')?'tag-client':t.includes('hybrid')?'tag-hybrid':'tag-calls';};
+  var tagsHtml=s.tags.map(function(t){return '<span class="tag '+tagCls(t)+'">'+t+'</span>';}).join('');
+  return '<div class="skill-card">'
+    +'<div class="skill-card-top"><div class="skill-icon" style="background:rgba('+rgb+',.12);border:1px solid rgba('+rgb+',.25)">'+s.icon+'</div>'
+    +'<span class="skill-card-name">'+s.name+'</span></div>'
+    +'<div class="skill-card-tags">'+tagsHtml+'</div></div>';
+}
+
+function initData(){
+  var el=document.getElementById('agentListOverview');
+  if(el) el.innerHTML=AGENTS.slice(0,5).map(function(a){return buildAgentRow(a,false);}).join('');
+  var el2=document.getElementById('agentListFull');
+  if(el2) el2.innerHTML=AGENTS.map(function(a){return buildAgentRow(a,true);}).join('');
+  var el3=document.getElementById('skillGridOverview');
+  if(el3) el3.innerHTML=SKILLS.slice(0,6).map(function(s){return buildSkillCard(s);}).join('');
+  var el4=document.getElementById('skillMarket');
+  if(el4) el4.innerHTML=SKILLS.map(function(s){
+    var tagCls=function(t){return t.includes('server')?'tag-server':t.includes('client')?'tag-client':t.includes('hybrid')?'tag-hybrid':'tag-calls';};
+    return '<div class="panel" style="cursor:pointer;">'
+      +'<div class="panel-body" style="padding:16px;">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">'
+      +'<div style="width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--bg-hover);border:1px solid var(--border)">'+s.icon+'</div>'
+      +'<div><div style="font-size:14px;font-weight:500;color:var(--text-primary)">'+s.name+'</div>'
+      +'<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">'+(s.tags[1]||'')+'</div></div></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+s.tags.map(function(t){return '<span class="tag '+tagCls(t)+'">'+t+'</span>';}).join('')+'</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button class="btn btn-ghost" style="flex:1;padding:5px;font-size:11px;justify-content:center">查看详情</button>'
+      +'<button class="btn btn-primary" style="flex:1;padding:5px;font-size:11px;justify-content:center">+ 引用</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+
+const PAGE_MAP={overview:'page-overview',arch:'page-arch',agents:'page-agents',skills:'page-skills',monitor:'page-monitor',deploy:'page-deploy',routing:'page-routing',orchestration:'page-overview'};
+function navigate(page,navEl){
+  document.querySelectorAll('.page-section').forEach(function(p){p.classList.remove('active');});
+  var target=PAGE_MAP[page]||'page-overview';
+  var el=document.getElementById(target);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  if(navEl) navEl.classList.add('active');
+  if(page==='monitor') startMonitorLive();
+  if(page==='routing') drawRouteChart();
+  if(target==='page-overview') setTimeout(drawCallChart,50);
+}
+function openModal(){document.getElementById('modalBackdrop').classList.add('open');}
+function closeModal(){document.getElementById('modalBackdrop').classList.remove('open');}
+function switchTab(el){
+  var tabs=el.closest('.panel-header').querySelectorAll('.tab');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+}
+</script>
+
+
+<script>
+function drawCallChart(){
+  var canvas=document.getElementById('callChart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.offsetWidth||640,H=160;
+  canvas.width=W;canvas.height=H;
+  var server=[420,380,350,290,260,310,480,650,820,900,950,880,760,710,800,920,980,1050,1100,1020,900,820,700,620];
+  var client=[80,60,50,40,30,45,90,150,200,240,220,200,180,190,210,250,280,300,310,290,260,220,190,160];
+  var pts=server.length;
+  var maxV=1200;
+  var pad={l:36,r:16,t:10,b:24};
+  var gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,180,255,0.06)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){
+    var y=pad.t+gH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='rgba(122,155,181,0.5)';ctx.font='9px monospace';
+    ctx.fillText(Math.round(maxV*i/4),2,y+3);
+  }
+  var sg=ctx.createLinearGradient(0,pad.t,0,pad.t+gH);
+  sg.addColorStop(0,'rgba(0,180,255,0.2)');sg.addColorStop(1,'rgba(0,180,255,0)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();
+  server.forEach(function(v,i){
+    var x=pad.l+i*(gW/(pts-1));var y2=pad.t+gH*(1-v/maxV);
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  });
+  ctx.lineTo(W-pad.r,pad.t+gH);ctx.lineTo(pad.l,pad.t+gH);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#00b4ff';ctx.lineWidth=2;
+  ctx.beginPath();
+  server.forEach(function(v,i){
+    var x=pad.l+i*(gW/(pts-1));var y2=pad.t+gH*(1-v/maxV);
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  });
+  ctx.stroke();
+  ctx.strokeStyle='#00e5a0';ctx.lineWidth=2;
+  ctx.beginPath();
+  client.forEach(function(v,i){
+    var x=pad.l+i*(gW/(pts-1));var y2=pad.t+gH*(1-v/maxV);
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  });
+  ctx.stroke();
+  [0,6,12,18,23].forEach(function(i){
+    var x=pad.l+i*(gW/(pts-1));
+    ctx.fillStyle='rgba(122,155,181,0.5)';ctx.font='9px monospace';
+    ctx.fillText(i+'h',x-8,H-4);
+  });
+}
+
+function drawRouteChart(){
+  var canvas=document.getElementById('routeChart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=300,H=180;canvas.width=W;canvas.height=H;
+  var cx=100,cy=90,r=70;
+  var data=[
+    {label:'服务端',v:0.62,color:'#00b4ff'},
+    {label:'终端',v:0.28,color:'#00e5a0'},
+    {label:'离线降级',v:0.10,color:'#ffb800'},
+  ];
+  var ang=-Math.PI/2;
+  data.forEach(function(d){
+    var sweep=d.v*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+sweep);ctx.closePath();
+    ctx.fillStyle=d.color+'33';ctx.fill();
+    ctx.strokeStyle=d.color;ctx.lineWidth=2;ctx.stroke();
+    ang+=sweep;
+  });
+  ctx.fillStyle='#0a1628';ctx.beginPath();ctx.arc(cx,cy,40,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8f4ff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText('路由',cx,cy+5);
+  data.forEach(function(d,i){
+    var ly=25+i*46,lx=195;
+    ctx.fillStyle=d.color;ctx.fillRect(lx,ly,10,10);
+    ctx.fillStyle='#e8f4ff';ctx.font='12px sans-serif';ctx.textAlign='left';
+    ctx.fillText(d.label,lx+14,ly+9);
+    ctx.fillStyle=d.color;ctx.font='bold 13px sans-serif';
+    ctx.fillText(Math.round(d.v*100)+'%',lx+14,ly+23);
+  });
+}
+
+var monitorData={calls:[],errs:[]};
+var monitorTimer=null;
+function startMonitorLive(){
+  if(monitorTimer) clearInterval(monitorTimer);
+  monitorTimer=setInterval(updateMonitor,1200);
+  updateMonitor();
+}
+function updateMonitor(){
+  var qps=Math.round(200+Math.random()*150);
+  var p99=Math.round(400+Math.random()*400);
+  var err=(Math.random()*2).toFixed(2);
+  var qpsEl=document.getElementById('liveQps');
+  var p99El=document.getElementById('liveP99');
+  var errEl=document.getElementById('liveErr');
+  if(qpsEl) qpsEl.textContent=qps;
+  if(p99El) p99El.textContent=p99;
+  if(errEl) errEl.textContent=err;
+  monitorData.calls.push(qps);monitorData.errs.push(parseFloat(err));
+  if(monitorData.calls.length>30){monitorData.calls.shift();monitorData.errs.shift();}
+  drawMonitorChart();
+}
+function drawMonitorChart(){
+  var canvas=document.getElementById('monitorChart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.offsetWidth||600,H=160;
+  canvas.width=W;canvas.height=H;
+  var data=monitorData.calls,pts=data.length;
+  if(pts<2)return;
+  var maxV=Math.max.apply(null,data)*1.2;
+  var pad={l:36,r:16,t:10,b:24};
+  var gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,180,255,0.06)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=pad.t+gH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();}
+  var g=ctx.createLinearGradient(0,pad.t,0,pad.t+gH);
+  g.addColorStop(0,'rgba(0,180,255,0.25)');g.addColorStop(1,'rgba(0,180,255,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  data.forEach(function(v,i){
+    var x=pad.l+i*(gW/(pts-1));var y2=pad.t+gH*(1-v/maxV);
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  });
+  ctx.lineTo(W-pad.r,pad.t+gH);ctx.lineTo(pad.l,pad.t+gH);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#00b4ff';ctx.lineWidth=2;
+  ctx.beginPath();
+  data.forEach(function(v,i){
+    var x=pad.l+i*(gW/(pts-1));var y2=pad.t+gH*(1-v/maxV);
+    i===0?ctx.moveTo(x,y2):ctx.lineTo(x,y2);
+  });
+  ctx.stroke();
+}
+
+var LOG_MSGS=[
+  {l:'INFO',m:'[投研Agent] 调用 <span>ERP查询Skill</span> 成功 · 耗时 142ms'},
+  {l:'OK',m:'[合规审查Agent] 风险评分任务完成 · 结果已加密存储'},
+  {l:'INFO',m:'[路由引擎] 请求路由至 <span>服务端</span> · 命中规则：敏感数据'},
+  {l:'INFO',m:'[本地文件Agent] 读取文档 report_2026Q1.pdf · 终端执行'},
+  {l:'WARN',m:'[ERP查询Skill] P99延迟 1205ms 超过阈值 <span>1000ms</span>'},
+  {l:'INFO',m:'[OA审批Agent] 启动多Agent协同 · 子任务已分发 3 个'},
+  {l:'OK',m:'[K8s] Skill Pod auto-scale: 8 → 12 实例 · 扩容完成'},
+  {l:'INFO',m:'[客服Agent] 意图识别完成 · 转发至 <span>知识检索Skill</span>'},
+  {l:'WARN',m:'[终端Agent DEV-0812] 心跳超时 · 尝试重连...'},
+  {l:'OK',m:'[安全审计] 敏感操作记录完成 · 操作者: <span>user_0x3F</span>'},
+  {l:'INFO',m:'[灰度发布] 投研Agent v2.3.1 流量切换 100% 完成'},
+  {l:'INFO',m:'[模型网关] 请求路由至 <span>私有化大模型</span> · tokens: 2048'},
+];
+var logIdx=0;
+function appendLog(){
+  var el=document.getElementById('logStream');
+  if(!el)return;
+  var msg=LOG_MSGS[logIdx%LOG_MSGS.length];logIdx++;
+  var now=new Date();
+  var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  var colorMap={INFO:'var(--accent)',WARN:'var(--warning)',OK:'var(--success)',ERROR:'var(--danger)'};
+  var div=document.createElement('div');div.className='log-line';
+  div.innerHTML='<span class="log-time">'+ts+'</span>'
+    +'<span class="log-level" style="color:'+colorMap[msg.l]+'">'+msg.l+'</span>'
+    +'<span class="log-msg">'+msg.m+'</span>';
+  el.appendChild(div);
+  while(el.children.length>60) el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
+
+window.addEventListener('load',function(){
+  initData();
+  drawCallChart();
+  for(var i=0;i<8;i++) appendLog();
+  setInterval(appendLog,2200);
+  window.addEventListener('resize',drawCallChart);
+});
+</script>
+</body>
+</html>
+
